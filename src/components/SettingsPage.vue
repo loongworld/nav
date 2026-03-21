@@ -75,14 +75,13 @@
               @action="handleAction"
               @editTitle="editTitle"
               @editFooter="editFooter"
+              @uploadAvatar="$emit('uploadAvatar', $event)"
               @setThemeMode="$emit('setThemeMode', $event)"
-              @setThemeStyle="$emit('setThemeStyle', $event)"
               @toggleSearch="$emit('toggleSearch')"
               @toggleHideEmpty="$emit('toggleHideEmpty')"
               @togglePublicMode="$emit('togglePublicMode')"
               @toggleRandomWallpaper="$emit('toggleRandomWallpaper')"
               @updateWallpaperApi="$emit('updateWallpaperApi', $event)"
-              @setDisplayMode="$emit('setDisplayMode', $event)"
             />
           </div>
         </div>
@@ -102,10 +101,6 @@ const props = defineProps({
   themeMode: {
     type: String,
     default: 'system'
-  },
-  themeStyle: {
-    type: String,
-    default: 'default'
   },
   isDark: {
     type: Boolean,
@@ -131,6 +126,14 @@ const props = defineProps({
     type: String,
     default: '📚 书签管理'
   },
+  avatarUrl: {
+    type: String,
+    default: ''
+  },
+  username: {
+    type: String,
+    default: '用户'
+  },
   footerContent: {
     type: String,
     default: '<p>Made with ❤️ using <a href="https://github.com/deerwan/nav" target="_blank">Vue 3 and Cloudflare</a></p>'
@@ -150,14 +153,10 @@ const props = defineProps({
   wallpaperApi: {
     type: String,
     default: ''
-  },
-  displayMode: {
-    type: String,
-    default: 'standard'
   }
 })
 
-const emit = defineEmits(['action', 'close', 'setThemeMode', 'setThemeStyle', 'toggleSearch', 'toggleHideEmpty', 'togglePublicMode', 'updateTitle', 'updateFooter', 'editTitle', 'editFooter', 'setActiveTab', 'toggleRandomWallpaper', 'updateWallpaperApi', 'setDisplayMode'])
+const emit = defineEmits(['action', 'close', 'setThemeMode', 'toggleSearch', 'toggleHideEmpty', 'togglePublicMode', 'updateTitle', 'updateFooter', 'editTitle', 'editFooter', 'setActiveTab', 'toggleRandomWallpaper', 'updateWallpaperApi', 'uploadAvatar'])
 
 const menuItems = ref([
   { id: 'appearance', name: '外观设置' },
@@ -185,15 +184,15 @@ const currentSettingsComponent = computed(() => {
 
 const componentProps = computed(() => ({
   themeMode: props.themeMode,
-  themeStyle: props.themeStyle,
   isDark: props.isDark,
   showSearch: props.showSearch,
   hideEmptyCategories: props.hideEmptyCategories,
   publicMode: props.publicMode,
   customTitle: props.customTitle,
+  avatarUrl: props.avatarUrl,
+  username: props.username,
   randomWallpaper: props.randomWallpaper,
   wallpaperApi: props.wallpaperApi,
-  displayMode: props.displayMode,
   footerContent: props.footerContent,
   totalBookmarks: totalBookmarks.value,
   privateBookmarks: privateBookmarks.value,

@@ -2,6 +2,37 @@
   <div class="settings-section">
     <h2 class="section-title">外观设置</h2>
     
+    <!-- 头像设置 -->
+    <div class="form-group">
+      <label class="form-label">头像设置</label>
+      <div class="avatar-settings">
+        <div class="avatar-preview">
+          <img 
+            :src="avatarUrl || defaultAvatarIcon" 
+            alt="当前头像"
+          />
+        </div>
+        <div class="avatar-actions">
+          <button type="button" class="avatar-btn avatar-btn-upload" @click="handleUploadAvatar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            上传头像
+          </button>
+        </div>
+      </div>
+      <div class="form-hint">上传自定义头像，图片大小不超过 2MB</div>
+      <input 
+        ref="avatarInput" 
+        type="file" 
+        accept="image/*" 
+        style="display: none" 
+        @change="handleAvatarChange"
+      />
+    </div>
+    
     <!-- 自定义标题 -->
     <div class="form-group">
       <label class="form-label">自定义标题</label>
@@ -50,45 +81,6 @@
           themeMode === 'light' ? '使用亮色主题' : 
           themeMode === 'dark' ? '使用暗色主题' : 
           '根据系统设置自动切换主题'
-        }}
-      </div>
-    </div>
-
-    <!-- 主题风格 -->
-    <div class="form-group">
-      <label class="form-label">主题风格</label>
-      <div class="form-row">
-        <select 
-          class="form-select"
-          :value="themeStyle"
-          @change="$emit('setThemeStyle', $event.target.value)"
-        >
-          <option value="default">✨ 默认风格</option>
-          <option value="ios26">🚀 iOS 26 风格</option>
-        </select>
-      </div>
-      <div class="form-hint">
-        选择不同的界面视觉风格
-      </div>
-    </div>
-    
-    <!-- 显示模式 -->
-    <div class="form-group">
-      <label class="form-label">显示模式</label>
-      <div class="form-row">
-        <select 
-          class="form-select"
-          :value="displayMode"
-          @change="handleDisplayModeChange"
-        >
-          <option value="standard">📋 标准模式</option>
-          <option value="efficient">⚡ 高效模式</option>
-        </select>
-      </div>
-      <div class="form-hint">
-        {{ 
-          displayMode === 'standard' ? '标准大小的书签卡片' : 
-          '紧凑布局，单页显示更多内容'
         }}
       </div>
     </div>
@@ -284,32 +276,31 @@ import { useSearchEngines } from '../../composables/useSearchEngines'
 
 const props = defineProps({
   themeMode: String,
-  themeStyle: {
-    type: String,
-    default: 'default'
-  },
   isDark: Boolean,
   showSearch: Boolean,
   hideEmptyCategories: Boolean,
   publicMode: Boolean,
   customTitle: String,
+  avatarUrl: String,
+  username: {
+    type: String,
+    default: '用户'
+  },
   footerContent: String,
   randomWallpaper: Boolean,
-  wallpaperApi: String,
-  displayMode: String
+  wallpaperApi: String
 })
 
 const emit = defineEmits([
   'editTitle', 
   'editFooter', 
+  'uploadAvatar',
   'setThemeMode', 
-  'setThemeStyle',
   'toggleSearch', 
   'toggleHideEmpty', 
   'togglePublicMode',
   'toggleRandomWallpaper',
-  'updateWallpaperApi',
-  'setDisplayMode'
+  'updateWallpaperApi'
 ])
 
 const { SEARCH_ENGINES, enabledEngines, enabledSearchEnginesPanel, toggleEngine, toggleSearchEnginesPanel } = useSearchEngines()
@@ -319,13 +310,39 @@ const allEngines = computed(() => SEARCH_ENGINES)
 const showApiDialog = ref(false)
 const apiInput = ref('')
 const error = ref('')
+const avatarInput = ref(null)
+
+const defaultAvatarIcon = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>'
+
+const handleUploadAvatar = () => {
+  avatarInput.value?.click()
+}
+
+const handleAvatarChange = (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    alert('请选择图片文件')
+    return
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert('图片大小不能超过 2MB')
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    emit('uploadAvatar', e.target.result)
+  }
+  reader.readAsDataURL(file)
+  
+  event.target.value = ''
+}
 
 const handleThemeChange = (event) => {
   emit('setThemeMode', event.target.value)
-}
-
-const handleDisplayModeChange = (event) => {
-  emit('setDisplayMode', event.target.value)
 }
 
 const handleConfirm = () => {
@@ -471,6 +488,72 @@ const openDialog = (e) => {
 }
 
 
+.avatar-settings {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.avatar-btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.avatar-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.avatar-btn-upload {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.avatar-btn-upload:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  transform: translateY(-1px);
+}
+
+.avatar-btn-upload:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+}
+
 .footer-preview {
   flex: 1;
   padding: 0.5rem;
@@ -502,6 +585,17 @@ const openDialog = (e) => {
 
 .btn-primary:hover {
   background: var(--primary-dark);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary);
 }
 
 .text-btn {
